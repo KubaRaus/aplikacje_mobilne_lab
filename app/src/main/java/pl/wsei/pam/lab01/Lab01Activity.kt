@@ -6,10 +6,10 @@ import android.widget.CheckBox
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
-import android.widget.Toolbar.LayoutParams
+import android.view.ViewGroup.LayoutParams
 import androidx.appcompat.app.AppCompatActivity
 
-class MainActivity : AppCompatActivity() {
+public class Lab01Activity : AppCompatActivity() {
     lateinit var mLayout: LinearLayout
     lateinit var mTitle: TextView
     lateinit var mProgress: ProgressBar
@@ -18,7 +18,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        setContentView(R.layout.activity_lab01)
         mLayout = findViewById(R.id.main)
 
         mTitle = TextView(this)
