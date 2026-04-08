@@ -1,35 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="24dp"
     tools:context="pl.wsei.pam.MainActivity">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="20dp"
+        android:text="@string/menu_title"
+        android:textAppearance="@style/TextAppearance.AppCompat.Headline" />
 
     <Button
         android:id="@+id/mainBtnRunLab01"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
         android:onClick="onClickMainBtnRunLab01"
-        android:text="@string/lab01"
-        app:layout_constraintBottom_toTopOf="@+id/mainBtnRunLab02"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.5" />
+        android:text="@string/lab01" />
 
     <Button
         android:id="@+id/mainBtnRunLab02"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
         android:onClick="onClickMainBtnRunLab02"
-        android:text="@string/lab02"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/mainBtnRunLab01"
-        app:layout_constraintVertical_bias="0.5" />
-</androidx.constraintlayout.widget.ConstraintLayout>
+        android:text="@string/lab02" />
+
+    <Button
+        android:id="@+id/mainBtnRunLab03"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        android:onClick="onClickMainBtnRunLab03"
+        android:text="@string/lab03" />
+
+    <Button
+        android:id="@+id/mainBtnRunLab06"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="onClickMainBtnRunLab06"
+        android:text="@string/lab06" />
+
+</LinearLayout>

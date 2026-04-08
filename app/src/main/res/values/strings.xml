@@ -1,7 +1,10 @@
 <resources>
-    <string name="app_name">Lab01</string>
+    <string name="app_name">PAM Labs</string>
+    <string name="menu_title">Wybierz laboratorium</string>
     <string name="lab01">Lab01</string>
     <string name="lab02">Lab02</string>
+    <string name="lab03">Lab03</string>
+    <string name="lab06">Lab07</string>
     <string name="board_activity_menu_sound">Dźwięk</string>
     <string name="title_activity_main">MainActivity</string>
 </resources>
