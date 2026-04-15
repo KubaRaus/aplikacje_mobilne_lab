@@ -1,5 +1,13 @@
 package pl.wsei.pam.lab06
 
+import android.Manifest
+import android.app.AlarmManager
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -18,6 +26,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
@@ -42,6 +51,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -60,6 +70,9 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
 import kotlinx.coroutines.launch
 import pl.wsei.pam.lab06.data.LocalDateConverter
 import pl.wsei.pam.lab06.model.Priority
@@ -72,10 +85,25 @@ import pl.wsei.pam.lab06.ui.list.ListViewModel
 import pl.wsei.pam.lab06.ui.theme.Lab01Theme
 import java.time.format.DateTimeFormatter
 
+const val notificationID = 121
+const val channelID = "Lab06 channel"
+const val titleExtra = "title"
+const val messageExtra = "message"
+const val taskIdExtra = "taskId"
+const val deadlineExtra = "deadline"
+
 class MainActivity : ComponentActivity() {
+    companion object {
+        lateinit var container: pl.wsei.pam.lab06.data.AppContainer
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        createNotificationChannel()
+        container = (this.application as TodoApplication).container
+
+
         setContent {
             Lab01Theme {
                 Surface(
@@ -87,11 +115,59 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    private fun createNotificationChannel() {
+        val name = "Lab06 channel"
+        val descriptionText = "Lab06 channel for notifications for approaching tasks"
+        val importance = NotificationManager.IMPORTANCE_DEFAULT
+        val channel = NotificationChannel(channelID, name, importance).apply {
+            description = descriptionText
+        }
+        val notificationManager =
+            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.createNotificationChannel(channel)
+    }
+
+    private fun scheduleAlarm(delayMillis: Long) {
+        val intent = Intent(applicationContext, NotificationBroadcastReceiver::class.java).apply {
+            putExtra(titleExtra, "Deadline")
+            putExtra(messageExtra, "Zbliża się termin zakończenia zadania")
+            putExtra(taskIdExtra, 0)
+            putExtra(deadlineExtra, System.currentTimeMillis() + 24 * 60 * 60 * 1000L)
+        }
+
+        val pendingIntent = PendingIntent.getBroadcast(
+            applicationContext,
+            notificationID,
+            intent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        val triggerTime = System.currentTimeMillis() + delayMillis
+        val alarmManager = getSystemService(ALARM_SERVICE) as AlarmManager
+        alarmManager.setExactAndAllowWhileIdle(
+            AlarmManager.RTC_WAKEUP,
+            triggerTime,
+            pendingIntent
+        )
+    }
 }
 
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun MainScreen() {
     val navController = rememberNavController()
+    val postNotificationPermission =
+        rememberPermissionState(permission = Manifest.permission.POST_NOTIFICATIONS)
+
+    LaunchedEffect(Unit) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            !postNotificationPermission.status.isGranted
+        ) {
+            postNotificationPermission.launchPermissionRequest()
+        }
+    }
+
     NavHost(navController = navController, startDestination = "list") {
         composable("list") { ListScreen(navController) }
         composable("form") { FormScreen(navController) }
@@ -126,7 +202,9 @@ fun AppTopBar(
                     Text(text = "Zapisz", fontSize = 18.sp)
                 }
             } else {
-                IconButton(onClick = { }) {
+                IconButton(onClick = {
+                    MainActivity.container.notificationHandler.showSimpleNotification()
+                }) {
                     Icon(Icons.Default.Settings, contentDescription = "Settings")
                 }
                 IconButton(onClick = { navController.navigate("list") }) {
@@ -168,7 +246,11 @@ fun ListScreen(
     ) { innerPadding ->
         LazyColumn(modifier = Modifier.padding(innerPadding)) {
             items(items = listUiState.items, key = { it.id }) { item ->
-                ListItem(item = item)
+                ListItem(
+                    item = item,
+                    onDoneChange = { checked -> viewModel.toggleDone(item, checked) },
+                    onDeleteClick = { viewModel.deleteTask(item) }
+                )
             }
         }
     }
@@ -305,7 +387,12 @@ fun TodoTaskInputForm(
 }
 
 @Composable
-fun ListItem(item: TodoTask, modifier: Modifier = Modifier) {
+fun ListItem(
+    item: TodoTask,
+    onDoneChange: (Boolean) -> Unit,
+    onDeleteClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     ElevatedCard(
         modifier = modifier
             .fillMaxWidth()
@@ -332,13 +419,26 @@ fun ListItem(item: TodoTask, modifier: Modifier = Modifier) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
                     Text("Priority")
                     Text(item.priority.name)
                 }
-                Text(if (item.isDone) "Done" else "Not done")
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(
+                        checked = item.isDone,
+                        onCheckedChange = onDoneChange
+                    )
+                    Text(if (item.isDone) "Done" else "Not done")
+                    IconButton(onClick = onDeleteClick) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Usuń zadanie"
+                        )
+                    }
+                }
             }
         }
     }

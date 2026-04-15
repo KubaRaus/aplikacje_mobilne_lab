@@ -12,13 +12,15 @@ object AppViewModelProvider {
     val Factory: ViewModelProvider.Factory = viewModelFactory {
         initializer {
             ListViewModel(
-                repository = todoApplication().container.todoTaskRepository
+                repository = todoApplication().container.todoTaskRepository,
+                taskAlarmScheduler = todoApplication().container.taskAlarmScheduler
             )
         }
         initializer {
             FormViewModel(
                 repository = todoApplication().container.todoTaskRepository,
-                currentDateProvider = todoApplication().container.currentDateProvider
+                currentDateProvider = todoApplication().container.currentDateProvider,
+                taskAlarmScheduler = todoApplication().container.taskAlarmScheduler
             )
         }
     }
@@ -27,4 +29,3 @@ object AppViewModelProvider {
 fun CreationExtras.todoApplication(): TodoApplication {
     return this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as TodoApplication
 }
-

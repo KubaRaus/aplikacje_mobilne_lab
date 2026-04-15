@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import pl.wsei.pam.lab06.alarm.TaskAlarmScheduler
 import pl.wsei.pam.lab06.data.CurrentDateProvider
 import pl.wsei.pam.lab06.data.LocalDateConverter
 import pl.wsei.pam.lab06.data.TodoTaskRepository
@@ -13,7 +14,8 @@ import java.time.LocalDate
 
 class FormViewModel(
     private val repository: TodoTaskRepository,
-    private val currentDateProvider: CurrentDateProvider
+    private val currentDateProvider: CurrentDateProvider,
+    private val taskAlarmScheduler: TaskAlarmScheduler
 ) : ViewModel() {
 
     var todoTaskUiState by mutableStateOf(TodoTaskUiState())
@@ -24,6 +26,7 @@ class FormViewModel(
             return false
         }
         repository.insertItem(todoTaskUiState.todoTask.toTodoTask())
+        taskAlarmScheduler.rescheduleNearestTaskAlarm()
         return true
     }
 
@@ -73,4 +76,3 @@ fun TodoTask.toTodoTaskForm(): TodoTaskForm = TodoTaskForm(
     isDone = isDone,
     priority = priority.name
 )
-
