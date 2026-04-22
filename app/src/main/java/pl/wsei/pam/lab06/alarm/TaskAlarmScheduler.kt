@@ -9,6 +9,7 @@ import pl.wsei.pam.lab06.NotificationBroadcastReceiver
 import pl.wsei.pam.lab06.data.LocalDateConverter
 import pl.wsei.pam.lab06.data.TodoTaskRepository
 import pl.wsei.pam.lab06.deadlineExtra
+import pl.wsei.pam.lab06.messageExtra
 import pl.wsei.pam.lab06.notificationID
 import pl.wsei.pam.lab06.taskIdExtra
 import pl.wsei.pam.lab06.titleExtra
@@ -51,6 +52,7 @@ class TaskAlarmScheduler(
         scheduleAlarm(
             taskId = nearestTask.id,
             title = nearestTask.title,
+            message = "Zbliza sie termin zakonczenia zadania",
             deadlineMillis = deadlineMillis,
             triggerAtMillis = triggerAt
         )
@@ -70,6 +72,7 @@ class TaskAlarmScheduler(
     private fun scheduleAlarm(
         taskId: Int,
         title: String,
+        message: String,
         deadlineMillis: Long,
         triggerAtMillis: Long
     ) {
@@ -77,6 +80,7 @@ class TaskAlarmScheduler(
         val intent = Intent(context, NotificationBroadcastReceiver::class.java).apply {
             putExtra(taskIdExtra, taskId)
             putExtra(titleExtra, title)
+            putExtra(messageExtra, message)
             putExtra(deadlineExtra, deadlineMillis)
         }
 

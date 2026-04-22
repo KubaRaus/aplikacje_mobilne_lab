@@ -1,12 +1,9 @@
 package pl.wsei.pam.lab06
 
 import android.Manifest
-import android.app.AlarmManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.app.PendingIntent
 import android.content.Context
-import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -65,6 +62,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
@@ -102,6 +100,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         createNotificationChannel()
         container = (this.application as TodoApplication).container
+        lifecycleScope.launch {
+            container.taskAlarmScheduler.rescheduleNearestTaskAlarm()
+        }
 
 
         setContent {
@@ -128,29 +129,6 @@ class MainActivity : ComponentActivity() {
         notificationManager.createNotificationChannel(channel)
     }
 
-    private fun scheduleAlarm(delayMillis: Long) {
-        val intent = Intent(applicationContext, NotificationBroadcastReceiver::class.java).apply {
-            putExtra(titleExtra, "Deadline")
-            putExtra(messageExtra, "Zbliża się termin zakończenia zadania")
-            putExtra(taskIdExtra, 0)
-            putExtra(deadlineExtra, System.currentTimeMillis() + 24 * 60 * 60 * 1000L)
-        }
-
-        val pendingIntent = PendingIntent.getBroadcast(
-            applicationContext,
-            notificationID,
-            intent,
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        )
-
-        val triggerTime = System.currentTimeMillis() + delayMillis
-        val alarmManager = getSystemService(ALARM_SERVICE) as AlarmManager
-        alarmManager.setExactAndAllowWhileIdle(
-            AlarmManager.RTC_WAKEUP,
-            triggerTime,
-            pendingIntent
-        )
-    }
 }
 
 @OptIn(ExperimentalPermissionsApi::class)
@@ -181,6 +159,7 @@ fun AppTopBar(
     title: String,
     showBackIcon: Boolean,
     route: String,
+    showSaveButton: Boolean = false,
     onSaveClick: () -> Unit = {}
 ) {
     TopAppBar(
@@ -197,7 +176,7 @@ fun AppTopBar(
             }
         },
         actions = {
-            if (route != "form") {
+            if (showSaveButton) {
                 OutlinedButton(onClick = onSaveClick) {
                     Text(text = "Zapisz", fontSize = 18.sp)
                 }
@@ -240,7 +219,8 @@ fun ListScreen(
                 navController = navController,
                 title = "List",
                 showBackIcon = false,
-                route = "form"
+                route = "form",
+                showSaveButton = false
             )
         }
     ) { innerPadding ->
@@ -270,6 +250,7 @@ fun FormScreen(
                 title = "Form",
                 showBackIcon = true,
                 route = "list",
+                showSaveButton = true,
                 onSaveClick = {
                     coroutineScope.launch {
                         val saved = viewModel.save()

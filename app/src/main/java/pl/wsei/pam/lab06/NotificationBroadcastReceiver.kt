@@ -20,13 +20,15 @@ class NotificationBroadcastReceiver : BroadcastReceiver() {
 
         val taskId = intent?.getIntExtra(taskIdExtra, 0) ?: 0
         val taskTitle = intent?.getStringExtra(titleExtra) ?: "Deadline"
+        val taskMessage = intent?.getStringExtra(messageExtra)
+            ?: "Zbliza sie termin zakonczenia zadania"
         val taskDeadlineMillis = intent?.getLongExtra(deadlineExtra, 0L) ?: 0L
         val taskDeadline = LocalDateConverter.fromMillis(taskDeadlineMillis)
 
         val notification = NotificationCompat.Builder(context, channelID)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle(taskTitle)
-            .setContentText("Zbliża się termin zakończenia zadania: ${taskDeadline}")
+            .setContentText("$taskMessage: $taskDeadline")
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
             .build()
@@ -43,7 +45,7 @@ class NotificationBroadcastReceiver : BroadcastReceiver() {
             .toEpochMilli()
 
         if (nextTime < deadlineEndExclusive) {
-            scheduleNext(context, taskId, taskTitle, taskDeadlineMillis, nextTime)
+            scheduleNext(context, taskId, taskTitle, taskMessage, taskDeadlineMillis, nextTime)
         }
 
 
@@ -53,6 +55,7 @@ class NotificationBroadcastReceiver : BroadcastReceiver() {
         context: Context,
         taskId: Int,
         taskTitle: String,
+        taskMessage: String,
         taskDeadlineMillis: Long,
         triggerAtMillis: Long
     ) {
@@ -60,6 +63,7 @@ class NotificationBroadcastReceiver : BroadcastReceiver() {
         val alarmIntent = Intent(context, NotificationBroadcastReceiver::class.java).apply {
             putExtra(taskIdExtra, taskId)
             putExtra(titleExtra, taskTitle)
+            putExtra(messageExtra, taskMessage)
             putExtra(deadlineExtra, taskDeadlineMillis)
         }
 
